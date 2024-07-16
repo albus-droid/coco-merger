@@ -30,31 +30,22 @@ This project provides a Python script to process and merge multiple folders cont
 
 2. **Run the Script:**
    ```bash
-   ./script.py
+   python script.py
    ```
 
 3. **Follow the Prompts:**
-   - Enter the number of folders you want to process.
-   - Provide the names of the folders to be processed.
+   - Enter the name of the main folder containing subfolders.
    - Provide the name of the output folder where the combined dataset will be saved.
 
 ## Script Explanation
 
-### `update_file_names(folder, counter, image_id_map)`
+### `process_and_copy_folders(folders, output_folder)`
 
-This function updates the filenames and IDs in the JSON annotation file for a given folder, ensuring unique filenames and IDs. It returns the updated counter for use with subsequent folders.
+This function processes multiple folders to update filenames and IDs, then combines JSON data and copies images to the specified output folder, ensuring unique filenames and IDs.
 
-### `create_new_json(folder, output_folder)`
+### `main()`
 
-This function creates a new JSON file in the output folder, containing only the `licenses`, `info`, and `categories` keys from the original JSON file.
-
-### `combine_json_and_images(folders, output_folder, image_id_map)`
-
-This function combines the JSON data and images from multiple folders into the specified output folder. It updates the combined JSON file and copies the images to the output folder.
-
-### `main(folders, output_folder)`
-
-The main function orchestrates the processing of multiple folders, calling `update_file_names` for each folder and then combining the JSON and image files.
+The main function orchestrates the processing by prompting the user for input, calling `process_and_copy_folders` to handle the merging of datasets.
 
 ## Example
 
@@ -71,9 +62,7 @@ The main function orchestrates the processing of multiple folders, calling `upda
 
 2. **Run the script and follow the prompts:**
    ```bash
-   How many folders do you want to process? 2
-   Enter the name of folder 1: folder1
-   Enter the name of folder 2: folder2
+   Enter the name of the main folder containing subfolders: main_folder
    Enter the name of the output folder: output_folder
    ```
 
