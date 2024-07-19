@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import os
 import json
 import shutil
@@ -24,18 +22,35 @@ def process_and_copy_folders(main_folders, output_folder):
     image_id_map = {}
     cat_id_map = {}
 
-    # Initialize combined_data with the first folder's licenses, info, and categories
+    # Initialize combined_data with the first subfolder's licenses, info, and categories from each main folder
     for main_folder in main_folders:
-        for folder in os.listdir(main_folder):
-            annotations_path = os.path.join(main_folder, folder, "annotations", "instances_default.json")
+        subfolders = [os.path.join(main_folder, subfolder) for subfolder in os.listdir(main_folder) if os.path.isdir(os.path.join(main_folder, subfolder))]
+        if subfolders:
+            first_subfolder = subfolders[0]
+            annotations_path = os.path.join(first_subfolder, "annotations", "instances_default.json")
             if os.path.exists(annotations_path):
                 data = load_json(annotations_path)
                 combined_data["licenses"] = data.get("licenses", combined_data["licenses"])
                 combined_data["info"] = data.get("info", combined_data["info"])
-                combined_data["categories"] = data.get("categories", combined_data["categories"])
-                break
-        if combined_data["categories"]:
-            break
+
+                # Handle category merging for the first subfolder in each main folder
+                categories = data.get("categories", [])
+                for new_cat in categories:
+                    new_id = None
+                    for output_cat in combined_data["categories"]:
+                        if new_cat["name"] == output_cat["name"]:
+                            new_id = output_cat["id"]
+                            break
+
+                    if new_id is not None:
+                        cat_id_map[new_cat["id"]] = new_id
+                    else:
+                        new_cat_id = max([c["id"] for c in combined_data["categories"]], default=0) + 1
+                        cat_id_map[new_cat["id"]] = new_cat_id
+                        new_cat["id"] = new_cat_id
+                        combined_data["categories"].append(new_cat)
+            else:
+                print(f"Annotations not found in the first subfolder of: {main_folder}")
 
     # Process each subfolder in the provided main folders
     for main_folder in main_folders:
@@ -54,21 +69,11 @@ def process_and_copy_folders(main_folders, output_folder):
             annotations = data.get("annotations", [])
             categories = data.get("categories", [])
 
-            # Handle category merging
+            # Handle category merging for the rest of the subfolders
             for new_cat in categories:
-                new_id = None
-                for output_cat in combined_data["categories"]:
-                    if new_cat["name"] == output_cat["name"]:
-                        new_id = output_cat["id"]
-                        break
-
-                if new_id is not None:
-                    cat_id_map[new_cat["id"]] = new_id
-                else:
-                    new_cat_id = max(c["id"] for c in combined_data["categories"]) + 1
-                    cat_id_map[new_cat["id"]] = new_cat_id
-                    new_cat["id"] = new_cat_id
-                    combined_data["categories"].append(new_cat)
+                if new_cat["id"] not in cat_id_map:
+                    continue
+                new_cat["id"] = cat_id_map[new_cat["id"]]
 
             image_files = {image_file for image_file in os.listdir(images_path)}
 
